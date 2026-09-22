@@ -1,13 +1,34 @@
-# Voice-Controlled Arduino LED
+# 🎤 Voice-Controlled Arduino LED
 
 ### Version 1 — Voice → Serial → Arduino → LED
 
-A simple project that turns a spoken command into a real hardware action.
+A beginner-friendly project that connects **voice recognition to real hardware** using Python, USB serial communication, and an Arduino Uno.
 
-A Linux PC listens to your voice, converts it into text, maps it to a simple command, and sends that command to an Arduino Uno over USB serial. The Arduino receives the command and controls an external LED connected to digital pin 8.
+The idea is simple:
 
-> The important idea: **the Arduino never needs to understand human language.**
-> The PC handles speech. The Arduino handles hardware.
+```text
+🎤 Human Voice
+      ↓
+💻 Python
+      ↓
+🧠 Speech Recognition
+      ↓
+🔎 Command Parser
+      ↓
+🔌 USB Serial
+      ↓
+🤖 Arduino Uno
+      ↓
+📍 Digital Pin 8
+      ↓
+💡 LED
+```
+
+The PC handles the voice.
+
+The Arduino handles the hardware.
+
+The communication between them uses a simple and explicit serial protocol.
 
 ---
 
@@ -17,115 +38,21 @@ You say:
 
 > "Turn the light on"
 
-The system turns it into:
+The PC converts the sentence into:
 
 ```text
 LIGHT_ON
 ```
 
-Then sends it through USB serial:
+Then sends it to the Arduino through USB serial.
 
-```text
-PC → USB Serial → Arduino Uno → D8 → LED
-```
-
-The Arduino replies:
+The Arduino turns on the external LED connected to **digital pin 8** and sends a status response back:
 
 ```text
 LIGHT_STATE:ON
 ```
 
-The PC displays the response.
-
-A simplified view:
-
-```text
-🎤 Your Voice
-      ↓
-🧠 Speech-to-Text
-      ↓
-🔎 Command Parser
-      ↓
-"LIGHT_ON"
-      ↓
-🔌 USB Serial
-      ↓
-🤖 Arduino Uno
-      ↓
-💡 External LED
-```
-
----
-
-## 🎥 Demo
-
-Example:
-
-```text
-Listening...
-
-You said: turn the light on
-
-Command: LIGHT_ON
-
-Sending to Arduino...
-
-Arduino: LIGHT_STATE:ON
-```
-
-The LED turns on.
-
-When you say:
-
-```text
-turn the light off
-```
-
-the command becomes:
-
-```text
-LIGHT_OFF
-```
-
-and the LED turns off.
-
-The project also rejects unrelated sentences instead of sending them to the Arduino.
-
----
-
-## 🧠 Why This Project?
-
-This is **Version 1** of a larger learning path.
-
-The goal is not to build a complete smart-home system immediately.
-
-The goal is to understand how the layers are connected:
-
-```text
-Human
-  ↓
-Speech
-  ↓
-Software
-  ↓
-Protocol
-  ↓
-Serial Communication
-  ↓
-Microcontroller
-  ↓
-Physical Output
-```
-
-Later versions can replace the USB cable with networking, MQTT, Node-RED and eventually KNX.
-
-The command itself can stay simple while the communication layer becomes more advanced.
-
----
-
-## 🏗️ Architecture
-
-![System architecture](diagrams/architecture.png)
+The complete flow is:
 
 ```text
 🎤 Voice
@@ -134,186 +61,153 @@ The command itself can stay simple while the communication layer becomes more ad
    ↓
 🔎 Command Parser
    ↓
-LIGHT_ON / LIGHT_OFF
+"LIGHT_ON"
    ↓
 🔌 USB Serial
    ↓
-🤖 Arduino Uno R3
-   ↓
-📍 Digital Pin 8
+🤖 Arduino Uno
    ↓
 💡 External LED
    ↓
-↩️ Serial Response
+↩️ Status Response
    ↓
-💻 PC
+💻 Python
 ```
-
-The speech layer and hardware layer are intentionally separated.
-
-The Arduino only receives predefined protocol commands.
-
-It does not receive:
-
-```text
-"Hey Arduino, could you please turn the light on?"
-```
-
-It receives:
-
-```text
-LIGHT_ON
-```
-
-This makes the hardware side simple and reusable.
 
 ---
 
-## ⚙️ How It Works
+## 🧠 Project Concept
 
-### 1. 🎤 Voice Input
+This project is **Version 1** of a larger progression from basic Arduino programming to IoT and Building Automation.
 
-The microphone captures the spoken command.
-
-For example:
+The objective is to understand the fundamentals first:
 
 ```text
-Turn the light on
+Human
+  ↓
+Voice
+  ↓
+Software
+  ↓
+Command
+  ↓
+Communication
+  ↓
+Microcontroller
+  ↓
+Physical Output
 ```
 
-### 2. 🧠 Speech-to-Text
+The Arduino does **not** understand natural language.
 
-The speech recognition engine converts the audio into text.
-
-Example:
-
-```text
-turn the light on
-```
-
-The default Version 1 setup uses Google Web Speech through the `SpeechRecognition` Python library.
-
-This requires an internet connection.
-
-### 3. 🔎 Command Parser
-
-Python checks the recognized sentence and maps it to a protocol token:
-
-```text
-turn the light on
-        ↓
-LIGHT_ON
-```
-
-and:
-
-```text
-turn the light off
-        ↓
-LIGHT_OFF
-```
-
-If the sentence is not recognized as a valid command, nothing is sent to the Arduino.
-
-### 4. 🔌 USB Serial
-
-Python sends:
-
-```text
-LIGHT_ON\n
-```
-
-to the Arduino at:
-
-```text
-9600 baud
-8N1
-```
-
-### 5. 🤖 Arduino
-
-The Arduino reads the command until the newline character.
-
-For:
+It only receives predefined commands such as:
 
 ```text
 LIGHT_ON
-```
-
-it executes:
-
-```cpp
-digitalWrite(LED_PIN, HIGH);
-```
-
-For:
-
-```text
 LIGHT_OFF
+STATUS
 ```
 
-it executes:
+This separation keeps the hardware simple and makes the system easier to extend later.
 
-```cpp
-digitalWrite(LED_PIN, LOW);
-```
+---
 
-### 6. 💡 Physical Output
+## 🏗️ System Architecture
 
-The external LED connected to **D8** turns on or off.
+![System Architecture](architecture.png)
 
-### 7. ↩️ Feedback
+The project is divided into two main sides.
 
-The Arduino sends a response back to the PC:
+### 💻 PC Side
+
+The PC is responsible for:
+
+* 🎤 Capturing voice from the microphone
+* 🧠 Converting speech into text
+* 🔎 Parsing the recognized sentence
+* 🔌 Sending commands through USB serial
+* ↩️ Reading the Arduino response
+
+### 🤖 Arduino Side
+
+The Arduino is responsible for:
+
+* 📥 Receiving commands
+* 🔎 Validating commands
+* 💡 Controlling the LED
+* 📤 Sending the current state back to the PC
+
+The two sides communicate using a small serial protocol instead of sending natural-language sentences directly to the Arduino.
+
+---
+
+## 🔄 Project Flow
+
+![Project Flowchart](flowchart.png)
+
+The main sequence is:
 
 ```text
-LIGHT_STATE:ON
+🎤 Speak
+  ↓
+🧠 Speech Recognition
+  ↓
+🔎 Command Parsing
+  ↓
+📨 Generate Command
+  ↓
+🔌 Send through USB
+  ↓
+🤖 Arduino receives command
+  ↓
+💡 Control LED
+  ↓
+📤 Send status
+  ↓
+💻 Display result
 ```
-
-or:
-
-```text
-LIGHT_STATE:OFF
-```
-
-The PC displays the actual response from the Arduino instead of assuming that the command succeeded.
 
 ---
 
 ## 🔌 Hardware
 
-### Required
+### Required Components
 
 | Component         | Purpose                      |
 | ----------------- | ---------------------------- |
 | 🤖 Arduino Uno R3 | Microcontroller              |
-| 🔌 USB data cable | Power + serial communication |
 | 💡 LED            | Physical output              |
-| 🧱 220 Ω resistor | LED current limiting         |
+| 🧱 220 Ω resistor | Current limiting             |
 | 🔗 Jumper wires   | Connections                  |
 | 🟫 Breadboard     | Optional                     |
+| 🔌 USB cable      | Power + serial communication |
+| 🎤 Microphone     | Voice input                  |
 
-No relay or mains equipment is required.
+No relay or mains voltage is used in this project.
 
-This project only controls a low-voltage LED.
+The output is a low-voltage LED.
 
 ---
 
 ## 🔧 Wiring
 
-The external LED is connected to **digital pin 8**.
+The current implementation uses an **external LED connected to digital pin 8**.
+
+![LED Wiring](wiring.png)
+
+The basic connection is:
 
 ```text
 Arduino D8
     │
+    ↓
+  220 Ω
     │
- [220 Ω]
+    ↓
+LED Anode (+)
+LED Cathode (-)
     │
-    ▼
- LED Anode (+)
- LED Cathode (-)
-    │
-    ▼
+    ↓
    GND
 ```
 
@@ -327,8 +221,6 @@ LED short leg (-) ─────── GND
 
 The resistor must be connected in series with the LED.
 
-Do not connect the LED directly between D8 and GND.
-
 The Arduino sketch uses:
 
 ```cpp
@@ -341,15 +233,14 @@ const int LED_PIN = 8;
 
 ### Requirements
 
-* Linux
-* Python 3.10+
-* Arduino Uno R3
-* Arduino IDE or `arduino-cli`
-* USB data cable
-* Microphone
-* Internet connection for Google Web Speech
+* 🐧 Linux
+* 🐍 Python 3.10+
+* 🤖 Arduino Uno R3
+* 🎤 Microphone
+* 🔌 USB connection
+* 🌐 Internet connection for Google Web Speech
 
-Python packages:
+Python libraries used by the project:
 
 ```text
 pyserial
@@ -358,7 +249,7 @@ SpeechRecognition
 
 PyAudio is optional.
 
-The controller can fall back to `arecord` when PyAudio is not available.
+When PyAudio is unavailable, the voice controller can use `arecord` as a microphone fallback.
 
 ---
 
@@ -372,6 +263,29 @@ Install the required system packages:
 sudo pacman -S python python-pip alsa-utils
 ```
 
+Create a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the Python dependencies:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install pyserial SpeechRecognition
+```
+
+### Debian / Ubuntu
+
+Install the required packages:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv alsa-utils
+```
+
 Create the virtual environment:
 
 ```bash
@@ -379,123 +293,52 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install Python dependencies:
+Install the Python dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r pc/requirements.txt
-```
-
-Optional PyAudio support:
-
-```bash
-python -m pip install -r pc/requirements-pyaudio.txt
-```
-
-### Debian / Ubuntu
-
-```bash
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv python3-dev \
-    portaudio19-dev build-essential alsa-utils
-```
-
-Then:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r pc/requirements.txt
+python -m pip install pyserial SpeechRecognition
 ```
 
 ---
 
-## 🔐 Serial Permissions
-
-On Linux, the user may need access to the serial device.
-
-For Debian/Ubuntu:
-
-```bash
-sudo usermod -aG dialout "$USER"
-```
-
-Log out and back in afterwards.
-
-On Arch Linux, check the permissions of the detected device if access is denied.
-
----
-
-## 🔎 Find the Arduino Port
-
-The Arduino may appear as:
-
-```text
-/dev/ttyACM0
-```
-
-or, depending on the USB-to-serial chip:
-
-```text
-/dev/ttyUSB0
-```
-
-List available ports:
-
-```bash
-python3 pc/voice_controller.py --list-ports
-```
-
-You can also check:
-
-```bash
-ls -l /dev/ttyACM* /dev/ttyUSB* 2>/dev/null
-```
-
----
-
-## 🤖 Upload the Arduino Code
+## 🤖 Arduino Setup
 
 Open:
 
 ```text
-arduino/voice_light_controller/voice_light_controller.ino
+voice_light_controller.ino
 ```
 
-In Arduino IDE select:
+Upload the sketch to the Arduino Uno using the Arduino IDE.
 
-```text
-Board → Arduino Uno
+The current LED configuration is:
+
+```cpp
+const int LED_PIN = 8;
 ```
 
-Then select the detected port.
-
-For example:
-
-```text
-/dev/ttyUSB0
-```
-
-Upload the sketch.
-
-The Arduino should start with:
+After startup, the Arduino sends:
 
 ```text
 READY
 ```
 
+This tells the PC that the Arduino is ready to receive commands.
+
 ---
 
-## 🧪 Test the Arduino First
+## 🧪 Test the Arduino
 
-Before using voice recognition, test the hardware and serial protocol.
+Before testing voice recognition, test the Arduino and LED independently.
 
-Open Serial Monitor:
+Open the Arduino Serial Monitor.
+
+Use:
 
 ```text
-Baud: 9600
-Line ending: Newline
+Baud Rate: 9600
+Line Ending: Newline
 ```
 
 Send:
@@ -504,21 +347,21 @@ Send:
 LIGHT_ON
 ```
 
-Expected:
+Expected response:
 
 ```text
 LIGHT_STATE:ON
 ```
 
-The external LED should turn on.
+The external LED connected to D8 should turn on.
 
-Then:
+Then send:
 
 ```text
 LIGHT_OFF
 ```
 
-Expected:
+Expected response:
 
 ```text
 LIGHT_STATE:OFF
@@ -526,51 +369,19 @@ LIGHT_STATE:OFF
 
 The LED should turn off.
 
-You can also test:
+You can also send:
 
 ```text
 STATUS
 ```
 
-Expected:
-
-```text
-LIGHT_STATE:OFF
-```
-
-or:
-
-```text
-LIGHT_STATE:ON
-```
-
-depending on the last commanded state.
+to check the current LED state.
 
 ---
 
-## ⚠️ Important: Serial Monitor
+## 🐍 Test with Python
 
-Only **one program** can own the serial port at a time.
-
-Before running Python:
-
-> **Close the Arduino IDE Serial Monitor.**
-
-Otherwise you may get:
-
-```text
-/dev/ttyUSB0 is already open
-```
-
-Check which process is using the port:
-
-```bash
-fuser -v /dev/ttyUSB0
-```
-
----
-
-## 🐍 Test Python Without Voice
+After uploading the Arduino sketch, close the Arduino Serial Monitor.
 
 Activate the virtual environment:
 
@@ -578,114 +389,128 @@ Activate the virtual environment:
 source .venv/bin/activate
 ```
 
-Then:
+Test the ON command:
 
 ```bash
-python3 pc/voice_controller.py --send LIGHT_ON
+python3 voice_controller.py --send LIGHT_ON
 ```
 
-Expected:
+Expected output:
 
 ```text
 Port: /dev/ttyUSB0
 Baud: 9600
 Waiting for Arduino READY...
 Arduino: READY
+Arduino: LIGHT_STATE:ON
 ```
 
-The LED should turn on.
-
-Test OFF:
+Test the OFF command:
 
 ```bash
-python3 pc/voice_controller.py --send LIGHT_OFF
+python3 voice_controller.py --send LIGHT_OFF
 ```
 
 The LED should turn off.
 
-This confirms:
+This confirms the complete communication path:
 
 ```text
-Python → USB Serial → Arduino → LED
+🐍 Python
+   ↓
+🔌 USB Serial
+   ↓
+🤖 Arduino
+   ↓
+💡 LED
 ```
 
-before introducing speech recognition.
+without involving speech recognition.
 
 ---
 
 ## 🎤 Voice Control
 
-Start the controller:
+Start the voice controller:
 
 ```bash
-python3 pc/voice_controller.py
+python3 voice_controller.py
 ```
 
-Speak after:
+When the program displays:
 
 ```text
 Listening...
 ```
 
-Try:
+say:
 
 ```text
 Turn the light on
 ```
 
-or:
+The system should produce something similar to:
+
+```text
+You said: turn the light on
+Command: LIGHT_ON
+Sending to Arduino...
+Arduino: LIGHT_STATE:ON
+```
+
+The LED should turn on.
+
+For example:
 
 ```text
 Turn the light off
 ```
 
-The complete path becomes:
+becomes:
 
 ```text
-🎤 Voice
- ↓
-🧠 Speech Recognition
- ↓
-🔎 Parser
- ↓
-LIGHT_ON
- ↓
-🔌 USB Serial
- ↓
-🤖 Arduino
- ↓
-💡 LED
+LIGHT_OFF
 ```
+
+and the Arduino turns the LED off.
 
 ---
 
-## 🎙️ Microphone Test
+## 🔎 Command Parser
 
-Check available recording devices:
+The command parser converts natural-language input into predefined hardware commands.
 
-```bash
-arecord -l
+Example:
+
+```text
+"turn the light on"
+          ↓
+      LIGHT_ON
 ```
 
-Record three seconds:
+Another example:
 
-```bash
-arecord -d 3 -f S16_LE -r 16000 -c 1 /tmp/mic-test.wav
+```text
+"turn the light off"
+          ↓
+      LIGHT_OFF
 ```
 
-Play the recording:
+Unknown or unrelated sentences should not be sent directly to the Arduino.
+
+The parser can be tested independently:
 
 ```bash
-aplay /tmp/mic-test.wav
+python3 test_parser.py
 ```
 
-If you can hear yourself, the microphone is working.
+This makes it possible to test the software logic before connecting the hardware.
 
 ---
 
-## 📡 Serial Protocol
+## 🔄 Serial Protocol
 
-The protocol is intentionally simple.
+The communication protocol is intentionally simple.
 
 ### PC → Arduino
 
@@ -715,163 +540,155 @@ Arduino → PC
 LIGHT_STATE:ON
 ```
 
-The Arduino does not parse natural language.
+The PC handles natural language.
 
-It only understands the protocol.
-
----
-
-## 🧪 Testing
-
-The recommended testing order is:
-
-```text
-1️⃣ Command parser
-       ↓
-2️⃣ Arduino + LED
-       ↓
-3️⃣ Serial communication
-       ↓
-4️⃣ Python command
-       ↓
-5️⃣ Microphone
-       ↓
-6️⃣ Speech recognition
-```
-
-Test the parser:
-
-```bash
-python3 pc/test_parser.py
-```
-
-Test parsing directly:
-
-```bash
-python3 pc/voice_controller.py --parse "turn the light on"
-```
-
-Expected:
-
-```text
-Command: LIGHT_ON
-```
-
-Test a sentence that should not control the LED:
-
-```bash
-python3 pc/voice_controller.py --parse "what time is it"
-```
-
-The command should be rejected.
+The Arduino handles deterministic commands.
 
 ---
 
-## 🗂️ Project Structure
+## 🎙️ Microphone Test
 
-```text
-voice-controlled-arduino/
-│
-├── 📄 README.md
-├── 📄 LICENSE
-│
-├── 🤖 arduino/
-│   └── voice_light_controller/
-│       └── voice_light_controller.ino
-│
-├── 🐍 pc/
-│   ├── voice_controller.py
-│   ├── command_parser.py
-│   ├── test_parser.py
-│   ├── requirements.txt
-│   ├── requirements-pyaudio.txt
-│   └── requirements-offline.txt
-│
-├── 📐 diagrams/
-│   ├── architecture.png
-│   ├── architecture.svg
-│   ├── wiring.png
-│   ├── wiring.svg
-│   ├── flowchart.png
-│   └── flowchart.svg
-│
-└── 📚 docs/
-    ├── protocol.md
-    └── video-script.md
-```
+The project can use `arecord` when PyAudio is not available.
 
----
-
-## 🛠️ Troubleshooting
-
-### `/dev/ttyUSB0 is already open`
-
-Close Arduino Serial Monitor.
-
-Then:
-
-```bash
-fuser -v /dev/ttyUSB0
-```
-
-Only one application should use the port.
-
-### LED does not turn on
-
-Check:
-
-```text
-D8 → 220 Ω → LED long leg
-LED short leg → GND
-```
-
-Also verify the sketch contains:
-
-```cpp
-const int LED_PIN = 8;
-```
-
-### Arduino is detected but Python cannot access it
-
-Check:
-
-```bash
-ls -l /dev/ttyUSB* /dev/ttyACM*
-```
-
-Then check permissions and serial-group membership.
-
-### `arecord: command not found`
-
-On Arch:
-
-```bash
-sudo pacman -S alsa-utils
-```
-
-On Debian/Ubuntu:
-
-```bash
-sudo apt install alsa-utils
-```
-
-### Speech recognition does not work
-
-Check the microphone:
+Check available recording devices:
 
 ```bash
 arecord -l
 ```
 
-Then test recording manually.
+Record a short sample:
 
-Remember that the default Google speech engine requires an internet connection.
+```bash
+arecord -d 3 -f S16_LE -r 16000 -c 1 /tmp/mic-test.wav
+```
+
+Play the recording:
+
+```bash
+aplay /tmp/mic-test.wav
+```
+
+If you can hear the recording, the microphone is working correctly at the system level.
 
 ---
 
-## 🚀 Roadmap
+## ⚠️ Troubleshooting
 
-This project is **Version 1** of a larger progression.
+### `/dev/ttyUSB0 is already open`
+
+Close the Arduino IDE Serial Monitor.
+
+Only one application should use the serial port at a time.
+
+You can check which process is using the port:
+
+```bash
+fuser -v /dev/ttyUSB0
+```
+
+---
+
+### 💡 LED does not turn on
+
+Check the wiring:
+
+```text
+D8
+ ↓
+220 Ω
+ ↓
+LED (+)
+LED (-)
+ ↓
+GND
+```
+
+Also verify that the Arduino sketch contains:
+
+```cpp
+const int LED_PIN = 8;
+```
+
+---
+
+### 🔌 Arduino is not detected
+
+Check available serial devices:
+
+```bash
+ls -l /dev/ttyUSB* /dev/ttyACM*
+```
+
+Depending on the USB-to-serial chip, the Arduino may appear as:
+
+```text
+/dev/ttyUSB0
+```
+
+or:
+
+```text
+/dev/ttyACM0
+```
+
+---
+
+### 🎤 Microphone is not detected
+
+Run:
+
+```bash
+arecord -l
+```
+
+If `arecord` is not installed on Arch Linux:
+
+```bash
+sudo pacman -S alsa-utils
+```
+
+---
+
+### 🌐 Speech recognition is not working
+
+The default Google Web Speech recognition requires an internet connection.
+
+First verify that:
+
+* Your microphone is detected.
+* The microphone can record audio.
+* Internet access is available.
+* The Arduino serial port is not being used by another application.
+
+---
+
+## 📁 Project Structure
+
+The repository intentionally keeps Version 1 simple:
+
+```text
+voice-controlled-arduino/
+│
+├── 📄 README.md
+│
+├── 🖼️ architecture.png
+├── 🖼️ flowchart.png
+├── 🖼️ wiring.png
+│
+├── 🐍 command_parser.py
+├── 🧪 test_parser.py
+├── 🎤 voice_controller.py
+│
+└── 🤖 voice_light_controller.ino
+```
+
+Everything required for this Version 1 implementation is contained in the repository root.
+
+---
+
+## 🗺️ Roadmap
+
+This project is the first step in a larger progression.
 
 ### V1 — Fundamentals
 
@@ -890,100 +707,107 @@ This project is **Version 1** of a larger progression.
 ### V2 — Multiple Outputs
 
 ```text
-Voice
+🎤 Voice
  ↓
-Serial
+🔌 Serial
  ↓
-Arduino
+🤖 Arduino
  ↓
 💡 💡 💡 Multiple Outputs
 ```
 
-### V3 — Network
+### V3 — Wi-Fi
 
 ```text
-Voice
+🎤 Voice
  ↓
-Wi-Fi
+📡 Wi-Fi
  ↓
 ESP32
  ↓
-Device
+💡 Device
 ```
 
-### V4 — IoT
+### V4 — MQTT
 
 ```text
-Voice
+🎤 Voice
  ↓
-MQTT
+📬 MQTT
  ↓
 ESP32
  ↓
-Device
+💡 Device
 ```
 
-### V5 — Automation
+### V5 — Node-RED
 
 ```text
-Voice
+🎤 Voice
  ↓
-Node-RED
+🔀 Node-RED
  ↓
-MQTT
+📬 MQTT
  ↓
 ESP32
  ↓
-Device
+💡 Device
 ```
 
 ### V6 — Building Automation
 
 ```text
-Voice
+🎤 Voice
  ↓
-Node-RED
+🔀 Node-RED
  ↓
-KNX
+⚡ KNX
  ↓
-Actuator
+🔌 Actuator
  ↓
 💡 Real Light
 ```
 
-The goal is to build each layer step by step instead of jumping directly into a complex Building Automation system.
+The objective is to introduce one new layer at a time while keeping the previous concepts understandable and reusable.
 
 ---
 
-## 🔮 What Comes Next?
+## 🚀 Future Direction
 
-The next versions will gradually introduce:
+Future versions will progressively introduce:
 
 * 📡 Wi-Fi
 * 📬 MQTT
 * 🔀 Node-RED
 * 🏠 Home Automation
 * ⚡ KNX
-* 💡 Real lighting actuators
-* 🔄 Feedback and closed-loop control
+* 🔄 Device feedback
+* 🧠 Local AI
+* 🏢 Building Automation
 
-The same basic principle remains:
-
-> **Human language stays at the software layer. Hardware receives simple, well-defined commands.**
+The long-term direction is to move from a simple Arduino experiment toward real **IoT and Building Automation architectures**.
 
 ---
 
-## 📺 Video
+## 📺 Project Series
 
-This project is part of the:
+This project is part of a practical progression:
 
 ### **From Arduino to Building Automation**
 
-A practical progression from basic microcontroller projects to IoT, automation and eventually Building Automation with KNX.
+Starting from:
 
-The complete shoot sheet is available here:
+```text
+Arduino → Serial → LED
+```
 
-[docs/video-script.md](docs/video-script.md)
+and progressively moving toward:
+
+```text
+IoT → MQTT → Node-RED → KNX → Building Automation
+```
+
+Each version adds a new technical layer instead of replacing everything from the previous version.
 
 ---
 
@@ -993,4 +817,5 @@ The complete shoot sheet is available here:
 
 Electronics • IoT • Building Automation • IT/OT
 
-GitHub: [Ab40D](https://github.com/Ab40D)
+GitHub: **Ab40D**
+
